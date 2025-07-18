@@ -4,8 +4,6 @@ A neural network-based financial market trend forecasting system that combines m
 ##  Main Features
 Multi-Frequency Data: Integrates economic indicators (CPI, IPI, Unemployment Rate) and financial indicators (Bitcoin, S&P 500, NASDAQ)
 
-Hybrid Architecture: CNN-GRU with masking layers to handle missing data
-
 Historical Series Treatment: Solutions for series starting at different periods (1960-2010)
 
 Trend Prediction: Focuses on market direction rather than specific values
