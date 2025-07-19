@@ -35,6 +35,8 @@ def load_financial_dataset():
     nasdaq = pd.read_csv(os.path.join(base_path, "NASDAQ.csv"), parse_dates=["Date"], index_col="Date").rename(columns=lambda x: f"NASDAQ_{x}")
     bitcoin = pd.read_csv(os.path.join(base_path, "BTCUSD.csv"), parse_dates=["Date"], index_col="Date").rename(columns=lambda x: f"BTC_{x}")
 
-    df = pd.concat([cpi, cpiCore, ppi, ipi, payroll, unemploy, yield5, yield10, yield30, rates, m1, m2, sp500, nasdaq, bitcoin], axis=1, join="outer")
+    df_sp500 = pd.concat([cpi, cpiCore, ppi, ipi, payroll, unemploy, yield5, yield10, yield30, rates, m1, m2, sp500], axis=1, join="outer")
+    df_nasdaq = pd.concat([cpi, cpiCore, ppi, ipi, payroll, unemploy, yield5, yield10, yield30, rates, m1, m2, nasdaq], axis=1, join="outer")
+    df_bitcoin = pd.concat([cpi, cpiCore, ppi, ipi, payroll, unemploy, yield5, yield10, yield30, rates, m1, m2, bitcoin], axis=1, join="outer")
 
-    return df
+    return [df_sp500, df_nasdaq, df_bitcoin]

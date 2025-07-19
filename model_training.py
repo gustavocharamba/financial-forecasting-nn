@@ -1,48 +1,42 @@
-import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-
 from preprocessing import load_and_preprocess
-from model import create_model
+from model import build_mlp
 
-# 1. Load processed data
-X_train, X_test, y_train_df, y_test_df, scaler = load_and_preprocess()
+def run_pipeline(target: str):
+    # load e preprocess
+    X_train, X_test, y_train, y_test, scaler = load_and_preprocess()
 
-# 2. Choose one target to predict (e.g., SP500 trend)
-target_col = 'SP500_Trend'
+    # seleciona labels do target (SP500, NASDAQ ou BTC)
+    ytr = y_train[f'{target}_Trend']
+    yte = y_test[f'{target}_Trend']
 
-y_train = y_train_df[target_col].values
-y_test = y_test_df[target_col].values
+    # treino/teste split adicional (se quiser) ou validar direto X_train
+    Xtr, Xval, ytr_sub, yval = train_test_split(
+        X_train, ytr, test_size=0.1, stratify=ytr, random_state=42)
 
-# 3. Create the model
-model = create_model(input_shape=X_train.shape[1], num_classes=3)
+    model = build_mlp(input_dim=X_train.shape[1])
+    callbacks = [
+        EarlyStopping(patience=7, restore_best_weights=True),
+        ModelCheckpoint(f'best_{target}.h5', save_best_only=True)
+    ]
 
-# 4. Define callbacks
-callbacks = [
-    EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True),
-    ModelCheckpoint('best_model.h5', monitor='val_loss', save_best_only=True)
-]
+    # treinamento
+    model.fit(
+        Xtr, ytr_sub,
+        validation_data=(Xval, yval),
+        epochs=60,
+        batch_size=32,
+        callbacks=callbacks
+    )
 
-# 5. Train the model
-model.fit(
-    X_train, y_train,
-    validation_split=0.2,
-    epochs=50,
-    batch_size=32,
-    callbacks=callbacks,
-    verbose=1
-)
+    # avaliação
+    yhat = model.predict(X_test).argmax(axis=1)
+    print(f"\n=== Relatório para {target} ===")
+    print(classification_report(yte, yhat))
+    print("Matriz de confusão:\n", confusion_matrix(yte, yhat))
 
-# 6. Evaluate on test set
-loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
-print(f"\n✅ Test Accuracy: {accuracy:.4f}")
-
-# 7. Predict and report
-y_pred_probs = model.predict(X_test)
-y_pred = np.argmax(y_pred_probs, axis=1)
-
-print("\nClassification Report:")
-print(classification_report(y_test, y_pred, digits=4))
-
-print("Confusion Matrix:")
-print(confusion_matrix(y_test, y_pred))
+if __name__ == '__main__':
+    for t in ['SP500', 'NASDAQ', 'BTC']:
+        run_pipeline(t)
